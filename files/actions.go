@@ -1,11 +1,11 @@
 package files
 
 import (
-	"io"
+	"io/ioutil"
 	"os"
 )
 
-func SaveFile(file io.Reader, path string, errChan chan error) {
+func SaveFile(file []byte, path string, errChan chan error) {
 	if _, err := os.Stat(path); err == nil {
 		errChan <- nil
 	} else if os.IsNotExist(err) {
@@ -15,15 +15,8 @@ func SaveFile(file io.Reader, path string, errChan chan error) {
 	}
 }
 
-func CreateFile(file io.Reader, path string, errChan chan error) {
-	systemFile, err := os.Create(path)
-	if err != nil {
-		errChan <- err
-		return
-	}
-	defer systemFile.Close()
-
-	_, err = io.Copy(systemFile, file)
+func CreateFile(file []byte, path string, errChan chan error) {
+	err := ioutil.WriteFile(path, file, 0777)
 	if err != nil {
 		errChan <- err
 		return

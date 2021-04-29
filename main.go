@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/dankokin/fivegen-assignment/handlers"
 	"github.com/dankokin/fivegen-assignment/models"
@@ -18,9 +19,13 @@ func (db *mockDb) UploadFileName(file *models.File, errChan chan error) {
 	return
 }
 
-func (db *mockDb) DownloadFileName(file models.File, errChan chan error) {
-	errChan <- nil
-	return
+func (db *mockDb) DownloadFileName(url string) *models.File {
+	return &models.File{
+		CreatedAt:    time.Now().Unix(),
+		HashedName:   "602f5b7eeff60a54f482a6f9e5df343a",
+		OriginalName: "Лр1.doc",
+		ShortUrl:     "aaaaaa",
+	}
 }
 
 func (db *mockDb) IsExists(key string, fileDataHash string) bool {
@@ -38,8 +43,9 @@ func main() {
 	db := &mockDb{}
 	u := handlers.CreateUploader(db, 15, templates, mainPagePath, dataPath)
 
-	http.HandleFunc("/", u.MainPageHandler)
-	http.HandleFunc("/upload", u.UploadFileHandler)
+	http.HandleFunc("/main", u.MainPageHandler)
+	http.HandleFunc("/api/upload", u.UploadFileHandler)
+	http.HandleFunc("/", u.ServeFile)
 
 	fmt.Println("starting server at :8000")
 	err := http.ListenAndServe(":8000", nil)

@@ -52,7 +52,7 @@ func (u *Uploader) NewHashedFileName(str string) string {
 func (u *Uploader) NewShortURL(fileDataHash string) string {
 	crcH := crc32.ChecksumIEEE([]byte(fileDataHash))
 	dataHash := strconv.FormatUint(uint64(crcH), 36)
-	for i := uint64(0); !u.Db.IsExists(dataHash, fileDataHash); i++ {
+	for i := uint64(0); u.Db.IsExists(dataHash, fileDataHash); i++ {
 		salt := strconv.FormatUint(i, 10)
 		fileDataHash = utils.ConcatenateStrings(dataHash, salt)
 		crcH = crc32.ChecksumIEEE([]byte(fileDataHash))
@@ -97,7 +97,7 @@ func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		fileDataHash)
 
 	errChan := make(chan error, 2)
-	go files.SaveFile(file, path, errChan)
+	go files.SaveFile(rawFile, path, errChan)
 
 	fileModel := models.File{
 		CreatedAt:    time.Now().Unix(),
@@ -109,6 +109,7 @@ func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	go u.Db.UploadFileName(&fileModel, errChan)
 
 	for i := 0; i < 2; i++ {
+
 		err = <-errChan
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
