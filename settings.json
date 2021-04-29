@@ -1,0 +1,4 @@
+{
+  "connection_string": "host=file_hosting port=5432 user=daniel password=1q2w3e dbname=file_hosting_db sslmode=disable",
+  "port": 8080
+}

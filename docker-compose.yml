@@ -1,0 +1,19 @@
+version: "3"
+services:
+  db:
+    image: postgres
+    container_name: file_hosting
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: daniel
+      POSTGRES_DB: file_hosting_db
+      POSTGRES_PASSWORD: 1q2w3e
+  logger:
+    depends_on:
+      - db
+    build: .
+    restart: always
+    ports:
+      - 8080:8080
