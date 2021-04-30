@@ -8,4 +8,3 @@ type DataStore interface {
 	IsExists(key string, fileDataHash string) bool
 	AllFilesRecords() ([]string, error)
 }
-

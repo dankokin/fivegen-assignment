@@ -1,55 +1,46 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"github.com/dankokin/fivegen-assignment/models"
+	"log"
 	"net/http"
+	"os"
 	"text/template"
-	"time"
 
 	"github.com/dankokin/fivegen-assignment/handlers"
-	"github.com/dankokin/fivegen-assignment/models"
+	"github.com/dankokin/fivegen-assignment/services"
 )
 
-type mockDb struct {
-}
-
-func (db *mockDb) UploadFileName(file *models.File, errChan chan error) {
-	errChan <- nil
-	return
-}
-
-func (db *mockDb) DownloadFileName(url string) *models.File {
-	return &models.File{
-		CreatedAt:    time.Now().Unix(),
-		HashedName:   "602f5b7eeff60a54f482a6f9e5df343a",
-		OriginalName: "Лр1.doc",
-		ShortUrl:     "aaaaaa",
-	}
-}
-
-func (db *mockDb) IsExists(key string, fileDataHash string) bool {
-	return false
-}
-
 func main() {
+	conf, err := models.InitConfigFile("settings")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	var mainPagePath string
-	flag.StringVar(&mainPagePath, "main", "static/main_page.html", "Path to main page of web-server")
+	flag.StringVar(&mainPagePath, "main", "static/main_page.html",
+		"Path to main page of web-server")
+
 	var dataPath string
 	flag.StringVar(&dataPath, "data", "data", "Path to stored files")
-	var templates = template.Must(template.ParseFiles(mainPagePath))
+
+	var serverAddr string
+	flag.StringVar(&serverAddr, "addr",
+		conf.Address + ":" + conf.Port, "Address of web-server")
+
 	flag.Parse()
 
-	db := &mockDb{}
-	u := handlers.CreateUploader(db, 15, templates, mainPagePath, dataPath)
+	var templates = template.Must(template.ParseFiles(mainPagePath))
+	rdb := services.NewRedisDataStore(os.Getenv("REDIS_URL"), os.Getenv("REDIS_PASSWORD"), 0, context.Background())
+	u := handlers.CreateUploader(rdb, conf.MaxFileSize, templates, mainPagePath, dataPath, serverAddr)
 
 	http.HandleFunc("/main", u.MainPageHandler)
 	http.HandleFunc("/api/upload", u.UploadFileHandler)
 	http.HandleFunc("/", u.ServeFile)
 
-	fmt.Println("starting server at :8000")
-	err := http.ListenAndServe(":8000", nil)
-	if err != nil {
-		return
-	}
+	fmt.Printf("starting server at :%s port", conf.Port)
+	log.Fatal(http.ListenAndServe(":" + conf.Port, nil))
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"hash/crc32"
 	"io/ioutil"
 	"net/http"
@@ -20,20 +21,23 @@ import (
 type Uploader struct {
 	Db services.DataStore
 
-	FileMaxSize  int64 `json:"file_max_size"`
+	FileMaxSize  uint `json:"file_max_size"`
 	TemplateFile *template.Template
 
-	MainPagePath string
-	DataPath     string
+	WebServerAddress string
+	MainPagePath     string
+	DataPath         string
 }
 
-func CreateUploader(db services.DataStore, maxSize int64, tmp *template.Template, mainPath string, dataPath string) *Uploader {
+func CreateUploader(db services.DataStore, maxSize uint, tmp *template.Template,
+	mainPath, dataPath, addr string) *Uploader {
 	return &Uploader{
-		Db:           db,
-		FileMaxSize:  maxSize,
-		TemplateFile: tmp,
-		MainPagePath: mainPath,
-		DataPath:     dataPath,
+		Db:               db,
+		FileMaxSize:      maxSize,
+		TemplateFile:     tmp,
+		MainPagePath:     mainPath,
+		DataPath:         dataPath,
+		WebServerAddress: addr,
 	}
 }
 
@@ -53,6 +57,7 @@ func (u *Uploader) NewShortURL(fileDataHash string) string {
 	crcH := crc32.ChecksumIEEE([]byte(fileDataHash))
 	dataHash := strconv.FormatUint(uint64(crcH), 36)
 	for i := uint64(0); u.Db.IsExists(dataHash, fileDataHash); i++ {
+		fmt.Println(i)
 		salt := strconv.FormatUint(i, 10)
 		fileDataHash = utils.ConcatenateStrings(dataHash, salt)
 		crcH = crc32.ChecksumIEEE([]byte(fileDataHash))
@@ -70,7 +75,7 @@ func (u *Uploader) MainPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(u.FileMaxSize << 20)
+	err := r.ParseMultipartForm(int64(u.FileMaxSize) << 20)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -109,7 +114,6 @@ func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	go u.Db.UploadFileName(&fileModel, errChan)
 
 	for i := 0; i < 2; i++ {
-
 		err = <-errChan
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -117,5 +121,5 @@ func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	json.NewEncoder(w).Encode(fileModel.ShortUrl)
+	json.NewEncoder(w).Encode(models.MakeResponse(u.WebServerAddress, fileModel.ShortUrl))
 }

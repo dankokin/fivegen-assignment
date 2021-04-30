@@ -1,2 +1,5 @@
 # Directories
 .idea/
+
+# Files
+.env
