@@ -6,4 +6,6 @@ type DataStore interface {
 	UploadFileName(file *models.File, errChan chan error)
 	DownloadFileName(url string) *models.File
 	IsExists(key string, fileDataHash string) bool
+	AllFilesRecords() ([]string, error)
 }
+
