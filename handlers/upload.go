@@ -67,6 +67,7 @@ func (u *Uploader) NewShortURL(fileDataHash string) string {
 }
 
 func (u *Uploader) MainPageHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("main")
 	err := u.TemplateFile.Execute(w, u.MainPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -6,9 +6,9 @@ import (
 )
 
 type Config struct {
-	Address     string `json:"address"`
-	Port        string `json:"port"`
-	MaxFileSize uint   `json:"max_file_size"`
+	ServerAddress string `json:"server_address"`
+	ServerPort    string `json:"server_port"`
+	MaxFileSize   uint   `json:"max_file_size"`
 }
 
 func InitConfigFile(cnfFile string) (*Config, error) {

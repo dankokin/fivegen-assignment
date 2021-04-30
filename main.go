@@ -29,7 +29,7 @@ func main() {
 
 	var serverAddr string
 	flag.StringVar(&serverAddr, "addr",
-		conf.Address + ":" + conf.Port, "Address of web-server")
+		os.Getenv("NGINX_ADDRESS") + ":" + os.Getenv("NGINX_PORT"), "ServerAddress of web-server")
 
 	flag.Parse()
 
@@ -41,6 +41,6 @@ func main() {
 	http.HandleFunc("/api/upload", u.UploadFileHandler)
 	http.HandleFunc("/", u.ServeFile)
 
-	fmt.Printf("starting server at :%s port", conf.Port)
-	log.Fatal(http.ListenAndServe(":" + conf.Port, nil))
+	fmt.Println("starting server at : " + conf.ServerPort)
+	log.Fatal(http.ListenAndServe(":" + conf.ServerPort, nil))
 }

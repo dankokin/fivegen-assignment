@@ -13,9 +13,19 @@ services:
     depends_on:
       - redis
     ports:
-      - "8000:8000"
+      - "8000"
     environment:
-      REDIS_URL: redis:6379
+      NGINX_PORT: 81
+      NGINX_ADDRESS: 127.0.0.1
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_URL: redis:6379
     container_name: file_hosting_server
+    restart: always
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "81:81"
+    depends_on:
+      - app
     restart: always
