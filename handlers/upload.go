@@ -47,15 +47,11 @@ func (u *Uploader) Hash(data []byte) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func (u *Uploader) NewHashedFileName(str string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(str))
-	return hex.EncodeToString(hasher.Sum(nil))
-}
 
 func (u *Uploader) NewShortURL(fileDataHash string) string {
 	crcH := crc32.ChecksumIEEE([]byte(fileDataHash))
 	dataHash := strconv.FormatUint(uint64(crcH), 36)
+	// Continue the loop until the hash function returns a unique value
 	for i := uint64(0); u.Db.IsExists(dataHash, fileDataHash); i++ {
 		fmt.Println(i)
 		salt := strconv.FormatUint(i, 10)
@@ -67,7 +63,6 @@ func (u *Uploader) NewShortURL(fileDataHash string) string {
 }
 
 func (u *Uploader) MainPageHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("main")
 	err := u.TemplateFile.Execute(w, u.MainPagePath)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -75,6 +70,7 @@ func (u *Uploader) MainPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UploadFileHandler uploads files to the our server
 func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(int64(u.FileMaxSize) << 20)
 	if err != nil {
@@ -112,7 +108,7 @@ func (u *Uploader) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		ShortUrl:     u.NewShortURL(fileDataHash),
 	}
 
-	go u.Db.UploadFileName(&fileModel, errChan)
+	go u.Db.UploadFileInfo(&fileModel, errChan)
 
 	for i := 0; i < 2; i++ {
 		err = <-errChan

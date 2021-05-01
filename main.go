@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
 	"github.com/dankokin/fivegen-assignment/handlers"
 	"github.com/dankokin/fivegen-assignment/services"
@@ -37,10 +38,17 @@ func main() {
 	rdb := services.NewRedisDataStore(os.Getenv("REDIS_URL"), os.Getenv("REDIS_PASSWORD"), 0, context.Background())
 	u := handlers.CreateUploader(rdb, conf.MaxFileSize, templates, mainPagePath, dataPath, serverAddr)
 
+	worker := handlers.NewWorker(
+		time.Duration(conf.ExpirationTimeInDays)* time.Hour * 24,
+		conf.WorkersQuantity, time.Duration(conf.WorkerTimeoutInDays) * time.Hour * 24, rdb)
+
+	fmt.Println(worker)
+	go worker.DeleteExpiredFiles()
+
 	http.HandleFunc("/main", u.MainPageHandler)
 	http.HandleFunc("/api/upload", u.UploadFileHandler)
-	http.HandleFunc("/", u.ServeFile)
+	http.HandleFunc("/", u.ServeFileHandler)
 
-	fmt.Println("starting server at : " + conf.ServerPort)
+	fmt.Println("starting server at :" + conf.ServerPort)
 	log.Fatal(http.ListenAndServe(":" + conf.ServerPort, nil))
 }

@@ -9,6 +9,11 @@ type Config struct {
 	ServerAddress string `json:"server_address"`
 	ServerPort    string `json:"server_port"`
 	MaxFileSize   uint   `json:"max_file_size"`
+
+	ExpirationTimeInDays int `json:"expiration_time_in_days"`
+	WorkersQuantity uint `json:"workers_quantity"`
+	WorkerTimeoutInDays int `json:"worker_timeout_in_days"`
+
 }
 
 func InitConfigFile(cnfFile string) (*Config, error) {

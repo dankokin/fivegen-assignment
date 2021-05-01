@@ -33,7 +33,7 @@ func NewRedisDataStore(addr string, pass string, db int, ctx context.Context) *R
 	}
 }
 
-func (r *RedisDataStore) UploadFileName(file *models.File, errChan chan error) {
+func (r *RedisDataStore) UploadFileInfo(file *models.File, errChan chan error) {
 	jFile, err := json.Marshal(file)
 	if err != nil {
 		errChan <- err
@@ -49,7 +49,7 @@ func (r *RedisDataStore) UploadFileName(file *models.File, errChan chan error) {
 	errChan <- nil
 }
 
-func (r *RedisDataStore) DownloadFileName(url string) *models.File {
+func (r *RedisDataStore) DownloadFileInfo(url string) *models.File {
 	jFile, err := r.client.Get(r.ctx, url).Result()
 	if err == redis.Nil {
 		return nil
@@ -81,6 +81,15 @@ func (r *RedisDataStore) IsExists(key string, fileDataHash string) bool {
 	}
 }
 
-func (r *RedisDataStore) AllFilesRecords() ([]string, error) {
-	return nil, nil
+func (r *RedisDataStore) AllFilesRecords(records chan string) {
+	defer close(records)
+	result, _ := r.client.Do(r.ctx, "KEYS", "*").Result()
+	for _, value := range result.([]interface{}) {
+		jFile, _ := r.client.Get(r.ctx, value.(string)).Result()
+		records <- jFile
+	}
+}
+
+func (r *RedisDataStore) DeleteRecord(key string) {
+	r.client.Del(r.ctx, key)
 }

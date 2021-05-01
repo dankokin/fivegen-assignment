@@ -5,17 +5,20 @@ import (
 	"os"
 )
 
-func SaveFile(file []byte, path string, errChan chan error) {
+// SaveFile function saves the file to the specified path on server
+func SaveFile(file []byte, path string, errorChan chan error) {
 	if _, err := os.Stat(path); err == nil {
-		errChan <- nil
+		errorChan <- nil
 	} else if os.IsNotExist(err) {
-		CreateFile(file, path, errChan)
+		WriteFile(file, path, errorChan)
 	} else {
-		errChan <- err
+		errorChan <- err
 	}
 }
 
-func CreateFile(file []byte, path string, errChan chan error) {
+// WriteFile function copies the contents of the file to a new one to the
+// specified path on server
+func WriteFile(file []byte, path string, errChan chan error) {
 	err := ioutil.WriteFile(path, file, 0777)
 	if err != nil {
 		errChan <- err
