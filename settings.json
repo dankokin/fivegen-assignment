@@ -1,0 +1,8 @@
+{
+  "server_address": "127.0.0.1",
+  "server_port": "8000",
+  "max_file_size" : 15,
+  "expiration_time_in_days" : 365,
+  "workers_quantity" : 10,
+  "worker_timeout_in_days" : 1
+}
