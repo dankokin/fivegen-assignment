@@ -47,7 +47,6 @@ func (u *Uploader) Hash(data []byte) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-
 func (u *Uploader) NewShortURL(fileDataHash string) string {
 	crcH := crc32.ChecksumIEEE([]byte(fileDataHash))
 	dataHash := strconv.FormatUint(uint64(crcH), 36)

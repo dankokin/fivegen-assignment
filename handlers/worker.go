@@ -15,18 +15,20 @@ import (
 // Worker structure implements the logic for deleting old files
 type Worker struct {
 	ExpirationInterval time.Duration
-	WorkersQuantity uint
-	SleepTime time.Duration
+	WorkersQuantity    uint
+	SleepTime          time.Duration
+	DataPath           string
 
 	Db services.DataStore
 }
 
 func NewWorker(epxTime time.Duration, quantity uint,
-		sleep time.Duration, db services.DataStore) *Worker {
+	sleep time.Duration, db services.DataStore, data string) *Worker {
 	return &Worker{
 		ExpirationInterval: epxTime,
 		WorkersQuantity:    quantity,
 		SleepTime:          sleep,
+		DataPath:           data,
 		Db:                 db,
 	}
 }
@@ -58,9 +60,8 @@ func (w *Worker) launchHelper(wg *sync.WaitGroup, taskChannel chan string) {
 		} else {
 			if time.Unix(file.CreatedAt, 0).Add(w.ExpirationInterval).Unix() < time.Now().Unix() {
 				w.Db.DeleteRecord(file.ShortUrl)
-				fmt.Println(os.Remove(file.HashedName).Error())
+				fmt.Println(os.Remove(w.DataPath + "/" + file.HashedName).Error())
 			}
 		}
 	}
 }
-

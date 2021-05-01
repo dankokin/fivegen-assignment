@@ -30,7 +30,7 @@ func main() {
 
 	var serverAddr string
 	flag.StringVar(&serverAddr, "addr",
-		os.Getenv("NGINX_ADDRESS") + ":" + os.Getenv("NGINX_PORT"), "ServerAddress of web-server")
+		os.Getenv("NGINX_ADDRESS")+":"+os.Getenv("NGINX_PORT"), "ServerAddress of web-server")
 
 	flag.Parse()
 
@@ -39,8 +39,8 @@ func main() {
 	u := handlers.CreateUploader(rdb, conf.MaxFileSize, templates, mainPagePath, dataPath, serverAddr)
 
 	worker := handlers.NewWorker(
-		time.Duration(conf.ExpirationTimeInDays)* time.Hour * 24,
-		conf.WorkersQuantity, time.Duration(conf.WorkerTimeoutInDays) * time.Hour * 24, rdb)
+		time.Duration(conf.ExpirationTimeInDays)*time.Hour*24,
+		conf.WorkersQuantity, time.Duration(conf.WorkerTimeoutInDays)*time.Hour*24, rdb, dataPath)
 
 	fmt.Println(worker)
 	go worker.DeleteExpiredFiles()
@@ -50,5 +50,5 @@ func main() {
 	http.HandleFunc("/", u.ServeFileHandler)
 
 	fmt.Println("starting server at :" + conf.ServerPort)
-	log.Fatal(http.ListenAndServe(":" + conf.ServerPort, nil))
+	log.Fatal(http.ListenAndServe(":"+conf.ServerPort, nil))
 }
